@@ -1,84 +1,94 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-const TableComponent = ({ columnKeys, values }) => {
-  const [selectedRows, setSelectedRows] = useState([]);
+const TableComponent = ({ data }) => {
+  const [columnSelect, setColumnSelect] = useState(null);
+  const [rowSelect, setRowSelect] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
-  const handleCheckboxChange = (id) => {
-    setSelectedRows((prevSelectedRows) => {
-      if (prevSelectedRows.includes(id)) {
-        return prevSelectedRows.filter((rowId) => rowId !== id);
-      } else {
-        return [...prevSelectedRows, id];
-      }
-    });
+  if (!Array.isArray(data) || data.length === 0) {
+    return <h2 className='text-2xl'>No data to display! Please upload a CSV file!</h2>;
+  }
+
+  const header = data[0];
+  const rows = data.slice(1);
+
+  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentRows = rows.slice(startIndex, endIndex);
+
+  const handleColumnSel = (ind) => {
+    setColumnSelect(ind);
   };
 
-  const isRowSelected = (id) => selectedRows.includes(id);
+  const handleRowSel = (ind) => {
+    setRowSelect(ind);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
-    <div className="relative overflow-x-auto">
-      <table className="w-full text-sm text-left rtl:text-right text-gray-600 dark:text-gray-300">
-        <thead className="text-xs text-gray-900 uppercase bg-teal-300 dark:bg-teal-700 dark:text-gray-300">
+    <div>
+      <table
+        className='w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400'
+        style={{ border: '1px solid #a1a2a4', margin: 'auto' }}
+      >
+        <thead className='text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
           <tr>
-            {columnKeys.length > 0 && (
-              <th scope="col" className="px-6 py-3">
-                Select
-              </th>
-            )}
-            {columnKeys?.map((col, index) => (
+            {header.map((headerItem, index) => (
               <th
-                scope="col"
-                className="px-6 py-3"
-                key={`product-${index + 1}`}
+                key={index}
+                onClick={() => handleColumnSel(index)}
+                scope='col'
+                className={`hover:bg-gray-500 hover:text-white cursor-pointer px-6 py-3 ${columnSelect === index ? 'bg-gray-500 text-white' : ''}`}
               >
-                {col}
+                {headerItem}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {values?.map((valObj, i) => {
-            const { id, data: val } = valObj;
-            return (
-              <tr
-                className={`${
-                  isRowSelected(id)
-                    ? "bg-blue-200 dark:bg-blue-800"
-                    : "bg-white dark:bg-gray-900"
-                } border-b dark:border-gray-800`}
-                key={`values-${i + 1}`}
-              >
-                <th
-                  scope="row"
-                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+          {currentRows.map((row, rowIndex) => (
+            <tr
+              key={rowIndex}
+              onClick={() => handleRowSel(rowIndex)}
+              className={`bg-white border-b dark:bg-gray-800 dark:border-gray-700 ${rowSelect === rowIndex ? 'bg-yellow-400 text-white' : ''}`}
+            >
+              {row.map((cell, cellIndex) => (
+                <td
+                  key={cellIndex}
+                  className={`cursor-pointer px-6 py-4 ${columnSelect === cellIndex ? 'bg-yellow-500 text-white' : ''}`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isRowSelected(id)}
-                    onChange={() => handleCheckboxChange(id)}
-                  />
-                </th>
-
-                {val.map((el, ind) => {
-                  return ind === 0 ? (
-                    <th
-                      key={`val${ind}`}
-                      scope="row"
-                      className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-                    >
-                      {el}
-                    </th>
-                  ) : (
-                    <td className="px-6 py-4" key={`val${ind}`}>
-                      {el}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
+
+      <div style={{ width: '30%', margin: 'auto', marginTop: '10px', marginBottom: '20px' }} className='flex justify-between items-center'>
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 disabled:bg-gray-300'
+        >
+          Previous
+        </button>
+        <span className='text-sm'>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 disabled:bg-gray-300'
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
